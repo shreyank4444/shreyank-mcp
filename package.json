@@ -1,0 +1,28 @@
+{
+  "name": "shreyank-profile-mcp",
+  "version": "0.1.0",
+  "private": true,
+  "description": "A local MCP server for querying Shreyank S's professional profile.",
+  "type": "module",
+  "packageManager": "bun@1.2.22",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc -p tsconfig.json",
+    "start": "node dist/index.js",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "latest",
+    "zod": "latest"
+  },
+  "devDependencies": {
+    "@types/node": "latest",
+    "tsx": "latest",
+    "typescript": "latest",
+    "vitest": "latest"
+  }
+}
