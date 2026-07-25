@@ -2,6 +2,8 @@
 
 A local [Model Context Protocol](https://modelcontextprotocol.io/) server that lets AI agents query Shreyank S's public professional background.
 
+For the complete Cloudflare deployment, GitHub OAuth, DCR, and reviewer connection runbook, see [DEPLOYMENT.md](DEPLOYMENT.md).
+
 ## What it exposes
 
 The server intentionally exposes no phone number or email address. Its four tools are:
