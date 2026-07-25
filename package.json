@@ -10,9 +10,12 @@
   },
   "scripts": {
     "dev": "tsx watch src/index.ts",
+    "dev:worker": "wrangler dev",
     "build": "tsc -p tsconfig.json",
+    "build:worker": "tsc -p tsconfig.worker.json",
     "start": "node dist/index.js",
     "typecheck": "tsc --noEmit",
+    "typecheck:worker": "tsc -p tsconfig.worker.json --noEmit",
     "test": "vitest run"
   },
   "dependencies": {
@@ -20,9 +23,11 @@
     "zod": "latest"
   },
   "devDependencies": {
+    "@cloudflare/workers-types": "latest",
     "@types/node": "latest",
     "tsx": "latest",
     "typescript": "latest",
-    "vitest": "latest"
+    "vitest": "latest",
+    "wrangler": "latest"
   }
 }
