@@ -1,9 +1,12 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "shreyank-profile-mcp",
+  "name": "shreyank-mcp",
   "main": "src/worker/index.ts",
   "compatibility_date": "2026-07-25",
   "compatibility_flags": ["nodejs_compat"],
+  "vars": {
+    "OAUTH_ISSUER": "https://shreyank-mcp.shreyankwritescode.workers.dev"
+  },
   "d1_databases": [
     {
       "binding": "DB",
