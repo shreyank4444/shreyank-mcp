@@ -22,7 +22,7 @@ describe("MCP server", () => {
 
     for (const [name, args] of [
       ["get_profile", {}],
-      ["list_skills", { category: "Backend & API Architecture" }],
+      ["list_skills", { category: "Proficient" }],
       ["list_projects", {}],
       ["search_background", { query: "React" }],
     ] as const) {

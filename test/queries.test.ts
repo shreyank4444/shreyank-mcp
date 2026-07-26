@@ -12,8 +12,8 @@ describe("profile queries", () => {
   });
 
   it("filters skills by category", () => {
-    expect(listSkills("AI Product Infrastructure")).toEqual({
-      "AI Product Infrastructure": expect.arrayContaining(["RAG Pipelines"]),
+    expect(listSkills("Expert")).toEqual({
+      Expert: expect.arrayContaining(["React", "React Native (Expo)", "TypeScript"]),
     });
   });
 

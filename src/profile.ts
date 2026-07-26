@@ -1,8 +1,4 @@
-export type SkillCategory =
-  | "Consumer Frontend & UX"
-  | "Backend & API Architecture"
-  | "AI Product Infrastructure"
-  | "Release Infra & Event Analytics";
+export type SkillCategory = "Expert" | "Proficient" | "Familiar";
 
 export interface Project {
   name: string;
@@ -40,47 +36,31 @@ export const profile = {
 } as const;
 
 export const skills: Record<SkillCategory, string[]> = {
-  "Consumer Frontend & UX": [
+  Expert: [
     "React",
+    "React Native (Expo)",
+    "TypeScript",
+    "JavaScript",
     "Next.js",
-    "TypeScript",
-    "JavaScript (ES6+)",
-    "Zustand",
     "Redux",
-    "Optimistic UI Updates",
-    "Micro-interactions",
-    "Design System Primitives",
-    "Tailwind CSS",
-    "Layout & Performance Profiling",
+    "Zustand",
+    "HTML5",
+    "CSS3",
+    "Git",
   ],
-  "Backend & API Architecture": [
+  Proficient: [
     "Node.js",
-    "TypeScript",
-    "PostgreSQL",
-    "Relational Data Modeling",
     "REST APIs",
     "GraphQL",
-    "Pragmatic Caching",
-    "Auth Flows",
-    "API Contracts",
-  ],
-  "AI Product Infrastructure": [
-    "Claude Code",
-    "RAG Pipelines",
-    "Structured Tool Calls & Output Validation",
-    "Conversational Workflows",
-    "Prompt & Eval Guardrails",
-  ],
-  "Release Infra & Event Analytics": [
-    "Feature Flags & Staged Rollouts",
-    "Event Instrumentation",
-    "Funnel Signals",
-    "Retention Markers",
-    "Real-time Error Boundaries",
     "WebSockets",
+    "Ethers.js",
+    "Web3.js",
+    "Tailwind CSS",
+    "Firebase",
+    "Supabase",
     "Vercel",
-    "Docker",
   ],
+  Familiar: ["Docker", "Chrome Extension APIs", "DeFi Application Architecture"],
 };
 
 export const experience: Experience[] = [
