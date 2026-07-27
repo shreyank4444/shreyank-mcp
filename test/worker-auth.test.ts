@@ -18,8 +18,6 @@ function createEnv(): Env {
   };
   return {
     DB: database as unknown as D1Database,
-    GITHUB_CLIENT_ID: "github-client-id",
-    GITHUB_CLIENT_SECRET: "github-client-secret",
     OAUTH_ISSUER: "https://profile.example.workers.dev",
     OAUTH_TOKEN_HASH_SECRET: "test-secret",
   };

@@ -2,7 +2,6 @@ import { WebStandardStreamableHTTPServerTransport } from "@modelcontextprotocol/
 
 import { createServer } from "../server.js";
 import {
-  completeGithubAuthorization,
   oauthMetadata,
   protectedResourceMetadata,
   registerClient,
@@ -44,7 +43,7 @@ async function handleMcp(request: Request, env: Env) {
       scopes: verified.scope.split(" "),
       expiresAt: verified.expires_at,
       resource: new URL(verified.resource),
-      extra: { githubLogin: verified.github_login },
+      extra: { identity: verified.github_login },
     },
   });
 }
@@ -53,7 +52,7 @@ export default {
   async fetch(request: Request, env: Env): Promise<Response> {
     const url = new URL(request.url);
     if (request.method === "OPTIONS") return new Response(null, { status: 204, headers: { Allow: "GET, POST, OPTIONS" } });
-    if (url.pathname === "/") return Response.json({ name: "shreyank-profile-mcp", status: "ok", mcp: "/mcp" });
+    if (url.pathname === "/") return Response.json({ name: "shreyank-mcp", status: "ok", mcp: "/mcp" });
     if (url.pathname === "/health") return Response.json({ status: "ok" });
     if (url.pathname === "/.well-known/oauth-authorization-server" && request.method === "GET") {
       return Response.json(oauthMetadata(env));
@@ -63,9 +62,6 @@ export default {
     }
     if (url.pathname === "/register") return request.method === "POST" ? registerClient(request, env) : methodNotAllowed();
     if (url.pathname === "/authorize") return request.method === "GET" ? startAuthorization(request, env) : methodNotAllowed();
-    if (url.pathname === "/oauth/github/callback") {
-      return request.method === "GET" ? completeGithubAuthorization(request, env) : methodNotAllowed();
-    }
     if (url.pathname === "/token") return request.method === "POST" ? token(request, env) : methodNotAllowed();
     if (url.pathname === "/revoke") return request.method === "POST" ? revoke(request, env) : methodNotAllowed();
     if (url.pathname === "/mcp") return handleMcp(request, env);

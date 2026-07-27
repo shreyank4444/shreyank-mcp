@@ -1,9 +1,8 @@
 import { randomValue, sha256, tokenHash } from "./crypto.js";
-import type { Env, OAuthClient, OAuthCode, OAuthToken, OAuthTransaction } from "./types.js";
+import type { Env, OAuthClient, OAuthCode, OAuthToken } from "./types.js";
 
 const ACCESS_TOKEN_TTL_SECONDS = 60 * 60;
 const AUTHORIZATION_CODE_TTL_SECONDS = 5 * 60;
-const AUTHORIZATION_TRANSACTION_TTL_SECONDS = 10 * 60;
 const REFRESH_TOKEN_TTL_SECONDS = 30 * 24 * 60 * 60;
 export const PROFILE_SCOPE = "profile:read";
 
@@ -181,98 +180,31 @@ export async function startAuthorization(request: Request, env: Env) {
     return error("Authorization requests require response_type=code, S256 PKCE, profile:read, and this MCP resource.");
   }
 
-  const state = randomValue();
-  const stateHash = await tokenHash(state, env.OAUTH_TOKEN_HASH_SECRET);
+  // Auto-approve: issue an auth code immediately without requiring identity login.
+  const code = randomValue();
+  const codeHash = await tokenHash(code, env.OAUTH_TOKEN_HASH_SECRET);
   await env.DB.prepare(
-    "INSERT INTO oauth_transactions (state_hash, client_id, redirect_uri, client_state, code_challenge, scope, resource, expires_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+    "INSERT INTO oauth_codes (code_hash, client_id, redirect_uri, code_challenge, scope, resource, github_login, expires_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
   )
     .bind(
-      stateHash,
+      codeHash,
       client.client_id,
       authorization.redirectUri,
-      authorization.state ?? null,
       authorization.codeChallenge,
       authorization.scope,
       authorization.resource,
-      now() + AUTHORIZATION_TRANSACTION_TTL_SECONDS,
+      "anonymous",
+      now() + AUTHORIZATION_CODE_TTL_SECONDS,
     )
     .run();
 
-  const githubUrl = new URL("https://github.com/login/oauth/authorize");
-  githubUrl.searchParams.set("client_id", env.GITHUB_CLIENT_ID);
-  githubUrl.searchParams.set("redirect_uri", `${env.OAUTH_ISSUER.replace(/\/$/, "")}/oauth/github/callback`);
-  githubUrl.searchParams.set("state", state);
-  githubUrl.searchParams.set("scope", "read:user");
-  return Response.redirect(githubUrl.toString(), 302);
-}
-
-async function githubLogin(code: string, env: Env) {
-  const callbackUrl = `${env.OAUTH_ISSUER.replace(/\/$/, "")}/oauth/github/callback`;
-  const tokenResponse = await fetch("https://github.com/login/oauth/access_token", {
-    method: "POST",
-    headers: { Accept: "application/json", "Content-Type": "application/json" },
-    body: JSON.stringify({
-      client_id: env.GITHUB_CLIENT_ID,
-      client_secret: env.GITHUB_CLIENT_SECRET,
-      code,
-      redirect_uri: callbackUrl,
-    }),
-  });
-  const token = (await tokenResponse.json()) as { access_token?: string };
-  if (!tokenResponse.ok || !token.access_token) throw new Error("GitHub token exchange failed.");
-
-  const userResponse = await fetch("https://api.github.com/user", {
-    headers: { Accept: "application/vnd.github+json", Authorization: `Bearer ${token.access_token}`, "User-Agent": "shreyank-profile-mcp" },
-  });
-  const user = (await userResponse.json()) as { login?: string };
-  if (!userResponse.ok || !user.login) throw new Error("GitHub user lookup failed.");
-  return user.login;
-}
-
-export async function completeGithubAuthorization(request: Request, env: Env) {
-  const url = new URL(request.url);
-  const state = url.searchParams.get("state");
-  const githubCode = url.searchParams.get("code");
-  if (!state || !githubCode) return error("GitHub did not return an authorization response.");
-
-  const stateHash = await tokenHash(state, env.OAUTH_TOKEN_HASH_SECRET);
-  const transaction = await env.DB.prepare("SELECT * FROM oauth_transactions WHERE state_hash = ?")
-    .bind(stateHash)
-    .first<OAuthTransaction>();
-  if (!transaction || transaction.expires_at <= now()) return error("Authorization session expired. Start again.");
-
-  let login: string;
-  try {
-    login = await githubLogin(githubCode, env);
-  } catch {
-    return error("GitHub sign-in could not be completed.", 502);
-  }
-
-  const code = randomValue();
-  const codeHash = await tokenHash(code, env.OAUTH_TOKEN_HASH_SECRET);
-  await env.DB.batch([
-    env.DB.prepare(
-      "INSERT INTO oauth_codes (code_hash, client_id, redirect_uri, code_challenge, scope, resource, github_login, expires_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-    ).bind(
-      codeHash,
-      transaction.client_id,
-      transaction.redirect_uri,
-      transaction.code_challenge,
-      transaction.scope,
-      transaction.resource,
-      login,
-      now() + AUTHORIZATION_CODE_TTL_SECONDS,
-    ),
-    env.DB.prepare("DELETE FROM oauth_transactions WHERE state_hash = ?").bind(stateHash),
-  ]);
-
-  const redirect = new URL(transaction.redirect_uri);
+  const redirect = new URL(authorization.redirectUri);
   redirect.searchParams.set("code", code);
-  if (transaction.client_state) redirect.searchParams.set("state", transaction.client_state);
+  if (authorization.state) redirect.searchParams.set("state", authorization.state);
   return Response.redirect(redirect.toString(), 302);
 }
 
-async function issueTokens(env: Env, clientId: string, scope: string, resource: string, githubLogin: string) {
+async function issueTokens(env: Env, clientId: string, scope: string, resource: string, identity: string) {
   const accessToken = `at_${randomValue(32)}`;
   const refreshToken = `rt_${randomValue(32)}`;
   const accessHash = await tokenHash(accessToken, env.OAUTH_TOKEN_HASH_SECRET);
@@ -281,10 +213,10 @@ async function issueTokens(env: Env, clientId: string, scope: string, resource: 
   await env.DB.batch([
     env.DB.prepare(
       "INSERT INTO oauth_tokens (token_hash, token_type, client_id, scope, resource, github_login, expires_at) VALUES (?, 'access', ?, ?, ?, ?, ?)",
-    ).bind(accessHash, clientId, scope, resource, githubLogin, issuedAt + ACCESS_TOKEN_TTL_SECONDS),
+    ).bind(accessHash, clientId, scope, resource, identity, issuedAt + ACCESS_TOKEN_TTL_SECONDS),
     env.DB.prepare(
       "INSERT INTO oauth_tokens (token_hash, token_type, client_id, scope, resource, github_login, expires_at) VALUES (?, 'refresh', ?, ?, ?, ?, ?)",
-    ).bind(refreshHash, clientId, scope, resource, githubLogin, issuedAt + REFRESH_TOKEN_TTL_SECONDS),
+    ).bind(refreshHash, clientId, scope, resource, identity, issuedAt + REFRESH_TOKEN_TTL_SECONDS),
   ]);
   return {
     access_token: accessToken,

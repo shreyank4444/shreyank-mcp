@@ -28,5 +28,20 @@
       "persist": true,
       "head_sampling_rate": 1
     }
+  },
+  "env": {
+    "dev": {
+      "name": "shreyank-mcp-dev",
+      "vars": {
+        "OAUTH_ISSUER": "https://shreyank-mcp-dev.shreyankwritescode.workers.dev"
+      },
+      "d1_databases": [
+        {
+          "binding": "DB",
+          "database_name": "shreyank-profile-mcp",
+          "database_id": "b5b3fc55-15ac-4559-b5a6-006368af7d73"
+        }
+      ]
+    }
   }
 }

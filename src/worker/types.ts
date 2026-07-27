@@ -1,7 +1,5 @@
 export interface Env {
   DB: D1Database;
-  GITHUB_CLIENT_ID: string;
-  GITHUB_CLIENT_SECRET: string;
   OAUTH_ISSUER: string;
   OAUTH_TOKEN_HASH_SECRET: string;
 }
@@ -16,16 +14,7 @@ export interface OAuthClient {
   client_id_issued_at: number;
 }
 
-export interface OAuthTransaction {
-  state_hash: string;
-  client_id: string;
-  redirect_uri: string;
-  client_state: string | null;
-  code_challenge: string;
-  scope: string;
-  resource: string;
-  expires_at: number;
-}
+
 
 export interface OAuthCode {
   code_hash: string;
