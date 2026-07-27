@@ -1,3 +1,5 @@
+/// <reference types="@cloudflare/workers-types" />
+
 export interface Env {
   DB: D1Database;
   OAUTH_ISSUER: string;
@@ -13,8 +15,6 @@ export interface OAuthClient {
   scope: string;
   client_id_issued_at: number;
 }
-
-
 
 export interface OAuthCode {
   code_hash: string;
